@@ -1,17 +1,11 @@
-
-import os
-import sys
 import numpy as np
-
-import scipy.misc
 import tensorflow as tf
 from PIL import Image
 import build_vgg
 
-
-OUTPUT_PATH = "D:\\Data Science Experiment\\CNN\\image_transformation\\"
-STYLE_IMAGE_PATH = "D:\\Data Science Experiment\\CNN\\image_transformation\\style.jpg"
-CONTENT_IMAGE_PATH = "D:\\Data Science Experiment\\CNN\\image_transformation\\content.jpg"
+OUTPUT_PATH = "./output.jpg"
+STYLE_IMAGE_PATH = "./style.jpg"
+CONTENT_IMAGE_PATH = "./content.jpg"
 
 # SETTINGS
 IMAGE_WIDTH = 800
@@ -35,7 +29,6 @@ CONTENT_LAYERS = [('conv4_2', 1.)]
 STYLE_LAYERS = [('conv1_1', 0.2), ('conv2_1', 0.2), ('conv3_1', 0.2), ('conv4_1', 0.2), ('conv5_1', 0.2)]
 
 
-
 def add_noise_to_content(content_image, noise_ratio = NOISE_RATIO):
     noise = np.random.uniform(-20, 20, (1, IMAGE_HEIGHT, IMAGE_WIDTH, COLOR_CHANNELS)).astype('float32')
     # 1 x height x width x color_channels
@@ -45,25 +38,17 @@ def add_noise_to_content(content_image, noise_ratio = NOISE_RATIO):
 # return an image of (1 x 1 x pixels x 3)
 def load_image(path):
     image = Image.open(path)
-    #image = image.convert("P")
-    #image = image.resize((IMAGE_HEIGHT, IMAGE_WIDTH))
-    #print(image.size)
     image_list = np.array(image.getdata())
     image = np.reshape(image_list, (1,) + (IMAGE_HEIGHT, IMAGE_WIDTH, 3))
-    #print(np.size(image))
     image = image - MEAN_VALUE
     return image
 
 def save_image(path, image):
     image = image + MEAN_VALUE;
-    """
-    pixels = pixels[0][0]
-    image = Image.new("RGB", (IMAGE_WIDTH, IMAGE_HEIGHT))
-    image.save(path + "output.jpg")
-    """
     image = image[0]
     image = np.clip(image, 0, 255).astype('uint8')
-    scipy.misc.imsave(path, image)
+    result = Image.fromarray(image)
+    result.save(path)
 
 ############## algorithm functions
 
@@ -127,13 +112,13 @@ def style_loss_func(sess, net):
 
     return total_style_loss
 
-#image = load_image("/home/fzy/CNNtest/style.jpg")
-#save_image("/home/fzy/CNNtest/", image)
-
 
 def main():
+    print('start building net...')
     net = build_vgg.build()
+    print('done')
 
+    print('start setting up')
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
@@ -178,16 +163,20 @@ def main():
 
     update_op = optimizer.minimize(total_loss, var_list=[net['input']])
     
-    #update_op.run()
+    print('done')
+    print('start running...')
     sess.run(update_op)
+
     
     """
         get the result
     """
     mixed_img = sess.run(net['input'])
 
+    print('done')
+    print('saving...')
     save_image(OUTPUT_PATH + "output.jpg", mixed_img)
-
+    print('finished!')
 
 if __name__=='__main__':
     main()

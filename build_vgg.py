@@ -1,4 +1,3 @@
-import scipy.io
 import tensorflow as tf
 import numpy as np
 # load VGG-19 model
